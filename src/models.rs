@@ -1,5 +1,27 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Claims {
+    pub sub: i32, // user id
+    pub exp: usize,
+}
+
+impl Claims {
+    pub fn new(user_id: i32) -> Self {
+        let exp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as usize + 24 * 60 * 60; // 24 hours from now
+        
+        Self {
+            sub: user_id,
+            exp,
+        }
+    }
+}
 
 #[derive(Deserialize)]
 pub struct CreateLink {
@@ -11,7 +33,7 @@ pub struct CreateLink {
 #[derive(Serialize, FromRow)]
 pub struct Link {
     pub id: i32,
-    pub user_id: i32,
+    pub user_id: Option<i32>,
     pub original_url: String,
     pub short_code: String,
     pub created_at: chrono::DateTime<chrono::Utc>,

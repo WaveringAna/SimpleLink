@@ -7,6 +7,7 @@ use tracing::info;
 mod error;
 mod handlers;
 mod models;
+mod auth;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -35,7 +36,7 @@ async fn main() -> Result<()> {
         .await?;
 
     // Run database migrations
-    sqlx::migrate!("./migrations").run(&pool).await?;
+    //sqlx::migrate!("./migrations").run(&pool).await?;
 
     let state = AppState { db: pool };
 
@@ -55,7 +56,9 @@ async fn main() -> Result<()> {
             .service(
                 web::scope("/api")
                     .route("/shorten", web::post().to(handlers::create_short_url))
-                    .route("/links", web::get().to(handlers::get_all_links)),
+                    .route("/links", web::get().to(handlers::get_all_links))
+                    .route("/auth/register", web::post().to(handlers::register))
+                    .route("/auth/login", web::post().to(handlers::login)),
                     
             )
             .service(

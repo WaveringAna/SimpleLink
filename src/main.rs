@@ -1,18 +1,9 @@
 use actix_web::{web, App, HttpServer};
 use actix_cors::Cors;
 use anyhow::Result;
-use sqlx::PgPool;
+use sqlx::postgres::PgPoolOptions;
+use simple_link::{AppState, handlers};
 use tracing::info;
-
-mod error;
-mod handlers;
-mod models;
-mod auth;
-
-#[derive(Clone)]
-pub struct AppState {
-    db: PgPool,
-}
 
 #[actix_web::main]
 async fn main() -> Result<()> {
@@ -26,9 +17,6 @@ async fn main() -> Result<()> {
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
     // Create database connection pool
-    use sqlx::postgres::PgPoolOptions;
-
-    // In main(), replace the PgPool::connect with:
     let pool = PgPoolOptions::new()
         .max_connections(5)
         .acquire_timeout(std::time::Duration::from_secs(3))
@@ -36,7 +24,7 @@ async fn main() -> Result<()> {
         .await?;
 
     // Run database migrations
-    //sqlx::migrate!("./migrations").run(&pool).await?;
+    sqlx::migrate!("./migrations").run(&pool).await?;
 
     let state = AppState { db: pool };
 
@@ -58,16 +46,15 @@ async fn main() -> Result<()> {
                     .route("/shorten", web::post().to(handlers::create_short_url))
                     .route("/links", web::get().to(handlers::get_all_links))
                     .route("/auth/register", web::post().to(handlers::register))
-                    .route("/auth/login", web::post().to(handlers::login)),
-                    
+                    .route("/auth/login", web::post().to(handlers::login))
+                    .route("/health", web::get().to(handlers::health_check)),
             )
             .service(
                 web::resource("/{short_code}")
                     .route(web::get().to(handlers::redirect_to_url))
             )
-            .service(web::resource("/{short_code}").route(web::get().to(handlers::redirect_to_url)))
     })
-    .workers(2) // Limit worker threads
+    .workers(2)
     .backlog(10_000)
     .bind("127.0.0.1:8080")?
     .run()

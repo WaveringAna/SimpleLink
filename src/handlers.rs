@@ -1,10 +1,10 @@
 use actix_web::{web, HttpResponse, Responder, HttpRequest};
-use jsonwebtoken::{encode, decode, Header, EncodingKey, DecodingKey, Validation, errors::Error as JwtError};use crate::{error::AppError, models::{AuthResponse, Claims, CreateLink, Link, LoginRequest, RegisterRequest, User, UserResponse}, AppState};
+use jsonwebtoken::{encode, Header, EncodingKey};use crate::{error::AppError, models::{AuthResponse, Claims, CreateLink, Link, LoginRequest, RegisterRequest, User, UserResponse}, AppState};
 use regex::Regex;
 use argon2::{password_hash::{rand_core::OsRng, SaltString}, PasswordVerifier};
 use lazy_static::lazy_static;
 use argon2::{Argon2, PasswordHash, PasswordHasher};
-use crate::auth::{AuthenticatedUser};
+use crate::auth::AuthenticatedUser;
 
 lazy_static! {
     static ref VALID_CODE_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9_-]{1,32}$").unwrap();

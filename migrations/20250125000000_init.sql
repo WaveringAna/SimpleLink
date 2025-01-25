@@ -1,3 +1,10 @@
+-- Add Migration Version
+CREATE TABLE IF NOT EXISTS _sqlx_migrations (
+    version BIGINT PRIMARY KEY,
+    description TEXT NOT NULL,
+    installed_on TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Create users table
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -5,7 +12,7 @@ CREATE TABLE users (
     password_hash TEXT NOT NULL
 );
 
--- Create links table with user_id from the start
+-- Create links table
 CREATE TABLE links (
     id SERIAL PRIMARY KEY,
     original_url TEXT NOT NULL,
@@ -15,7 +22,7 @@ CREATE TABLE links (
     user_id INTEGER REFERENCES users(id)
 );
 
--- Create clicks table for tracking
+-- Create clicks table
 CREATE TABLE clicks (
     id SERIAL PRIMARY KEY,
     link_id INTEGER REFERENCES links(id),

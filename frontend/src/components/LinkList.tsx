@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
-import { Copy, Trash2, BarChart2 } from "lucide-react"
+import { Copy, Trash2 } from "lucide-react"
 import {
 	Dialog,
 	DialogContent,
@@ -21,8 +21,6 @@ import {
 	DialogDescription,
 	DialogFooter,
 } from "@/components/ui/dialog"
-
-import { StatisticsModal } from "./StatisticsModal"
 
 interface LinkListProps {
 	refresh?: number;
@@ -35,10 +33,6 @@ export function LinkList({ refresh = 0 }: LinkListProps) {
 		isOpen: false,
 		linkId: null,
 	})
-	const [statsModal, setStatsModal] = useState<{ isOpen: boolean; linkId: number | null }>({
-		isOpen: false,
-		linkId: null,
-	});
 	const { toast } = useToast()
 
 	const fetchLinks = async () => {
@@ -154,15 +148,6 @@ export function LinkList({ refresh = 0 }: LinkListProps) {
 												<Button
 													variant="ghost"
 													size="icon"
-													className="h-8 w-8"
-													onClick={() => setStatsModal({ isOpen: true, linkId: link.id })}
-												>
-													<BarChart2 className="h-4 w-4" />
-													<span className="sr-only">View statistics</span>
-												</Button>
-												<Button
-													variant="ghost"
-													size="icon"
 													className="h-8 w-8 text-destructive"
 													onClick={() => setDeleteModal({ isOpen: true, linkId: link.id })}
 												>
@@ -178,11 +163,6 @@ export function LinkList({ refresh = 0 }: LinkListProps) {
 					</div>
 				</CardContent>
 			</Card>
-			<StatisticsModal
-				isOpen={statsModal.isOpen}
-				onClose={() => setStatsModal({ isOpen: false, linkId: null })}
-				linkId={statsModal.linkId!}
-			/>
 		</>
 	)
 }

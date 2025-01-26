@@ -12,7 +12,16 @@ export interface Link {
 	clicks: number;
 }
 
+export interface User {
+	id: number;
+	email: string;
+}
+
+export interface AuthResponse {
+	token: string;
+	user: User;
+}
+
 export interface ApiError {
 	error: string;
 }
-

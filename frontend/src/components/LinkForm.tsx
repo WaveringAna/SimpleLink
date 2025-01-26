@@ -1,83 +1,109 @@
-import { useState } from 'react';
-import { TextInput, Button, Group, Box, Text } from '@mantine/core';
-import { useForm } from '@mantine/form';
-import { CreateLinkRequest, Link } from '../types/api';
-import { createShortLink } from '../api/client';
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
+import { CreateLinkRequest, Link } from '../types/api'
+import { createShortLink } from '../api/client'
+import { Button } from "@/components/ui/button"
+import {
+	Form,
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { useToast } from "@/hooks/use-toast"
+
+const formSchema = z.object({
+	url: z.string()
+		.min(1, 'URL is required')
+		.url('Must be a valid URL')
+		.refine(val => val.startsWith('http://') || val.startsWith('https://'), {
+			message: 'URL must start with http:// or https://'
+		}),
+	custom_code: z.string()
+		.regex(/^[a-zA-Z0-9_-]{0,32}$/, 'Custom code must contain only letters, numbers, underscores, and hyphens')
+		.optional()
+})
 
 interface LinkFormProps {
-	onSuccess: (link: Link) => void;
+	onSuccess: (link: Link) => void
 }
 
 export function LinkForm({ onSuccess }: LinkFormProps) {
-	const [error, setError] = useState<string | null>(null);
-	const [loading, setLoading] = useState(false);
+	const [loading, setLoading] = useState(false)
+	const { toast } = useToast()
 
-	const form = useForm<CreateLinkRequest>({
-		initialValues: {
+	const form = useForm<z.infer<typeof formSchema>>({
+		resolver: zodResolver(formSchema),
+		defaultValues: {
 			url: '',
 			custom_code: '',
 		},
-		validate: {
-			url: (value) => {
-				if (!value) return 'URL is required';
-				if (!value.startsWith('http://') && !value.startsWith('https://')) {
-					return 'URL must start with http:// or https://';
-				}
-				return null;
-			},
-			custom_code: (value) => {
-				if (value && !/^[a-zA-Z0-9_-]{1,32}$/.test(value)) {
-					return 'Custom code must be 1-32 characters and contain only letters, numbers, underscores, and hyphens';
-				}
-				return null;
-			},
-		},
-	});
+	})
 
-	const handleSubmit = async (values: CreateLinkRequest) => {
+	const onSubmit = async (values: z.infer<typeof formSchema>) => {
 		try {
-			setLoading(true);
-			setError(null);
-			const link = await createShortLink(values);
-			form.reset();
-			onSuccess(link);
-		} catch (err) {
-			setError(err.response?.data?.error || 'An error occurred');
+			setLoading(true)
+			const link = await createShortLink(values as CreateLinkRequest)
+			form.reset()
+			onSuccess(link)
+			toast({
+				description: "Short link created successfully",
+			})
+		} catch (err: any) {
+			toast({
+				variant: "destructive",
+				title: "Error",
+				description: err.response?.data?.error || 'An error occurred',
+			})
 		} finally {
-			setLoading(false);
+			setLoading(false)
 		}
-	};
+	}
 
 	return (
-		<Box mx="auto" sx={{ maxWidth: 500 }}>
-			<form onSubmit={form.onSubmit(handleSubmit)}>
-				<TextInput
-					required
-					label="URL"
-					placeholder="https://example.com"
-					{...form.getInputProps('url')}
-				/>
+		<div className="max-w-[500px] mx-auto">
+			<Form {...form}>
+				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+					<FormField
+						control={form.control}
+						name="url"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>URL</FormLabel>
+								<FormControl>
+									<Input placeholder="https://example.com" {...field} />
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
 
-				<TextInput
-					label="Custom Code (optional)"
-					placeholder="example"
-					mt="md"
-					{...form.getInputProps('custom_code')}
-				/>
+					<FormField
+						control={form.control}
+						name="custom_code"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Custom Code (optional)</FormLabel>
+								<FormControl>
+									<Input placeholder="example" {...field} />
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
 
-				{error && (
-					<Text color="red" size="sm" mt="sm">
-						{error}
-					</Text>
-				)}
-
-				<Group position="right" mt="md">
-					<Button type="submit" loading={loading}>
-						Create Short Link
-					</Button>
-				</Group>
-			</form>
-		</Box>
-	);
+					<div className="flex justify-end">
+						<Button type="submit" disabled={loading}>
+							{loading ? "Creating..." : "Create Short Link"}
+						</Button>
+					</div>
+				</form>
+			</Form>
+		</div>
+	)
 }
 

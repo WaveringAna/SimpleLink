@@ -1,10 +1,38 @@
 import axios from 'axios';
-import { CreateLinkRequest, Link } from '../types/api';
+import { CreateLinkRequest, Link, AuthResponse } from '../types/api';
 
+// Create axios instance with default config
 const api = axios.create({
 	baseURL: '/api',
 });
 
+// Add a request interceptor to add the auth token to all requests
+api.interceptors.request.use((config) => {
+	const token = localStorage.getItem('token');
+	if (token) {
+		config.headers.Authorization = `Bearer ${token}`;
+	}
+	return config;
+});
+
+// Auth endpoints
+export const login = async (email: string, password: string) => {
+	const response = await api.post<AuthResponse>('/auth/login', {
+		email,
+		password,
+	});
+	return response.data;
+};
+
+export const register = async (email: string, password: string) => {
+	const response = await api.post<AuthResponse>('/auth/register', {
+		email,
+		password,
+	});
+	return response.data;
+};
+
+// Protected endpoints
 export const createShortLink = async (data: CreateLinkRequest) => {
 	const response = await api.post<Link>('/shorten', data);
 	return response.data;
@@ -15,3 +43,6 @@ export const getAllLinks = async () => {
 	return response.data;
 };
 
+export const deleteLink = async (id: number) => {
+	await api.delete(`/links/${id}`);
+};

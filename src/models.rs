@@ -1,5 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
@@ -14,12 +15,10 @@ impl Claims {
         let exp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
-            .as_secs() as usize + 24 * 60 * 60; // 24 hours from now
-        
-        Self {
-            sub: user_id,
-            exp,
-        }
+            .as_secs() as usize
+            + 24 * 60 * 60; // 24 hours from now
+
+        Self { sub: user_id, exp }
     }
 }
 
@@ -69,4 +68,16 @@ pub struct User {
     pub id: i32,
     pub email: String,
     pub password_hash: String,
+}
+
+#[derive(sqlx::FromRow, Serialize)]
+pub struct ClickStats {
+    pub date: NaiveDate,
+    pub clicks: i64,
+}
+
+#[derive(sqlx::FromRow, Serialize)]
+pub struct SourceStats {
+    pub source: String,
+    pub count: i64,
 }

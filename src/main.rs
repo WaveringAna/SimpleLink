@@ -1,9 +1,14 @@
 use actix_cors::Cors;
-use actix_web::{web, App, HttpServer};
+use actix_files::Files;
+use actix_web::{middleware::DefaultHeaders, web, App, HttpServer};
 use anyhow::Result;
-use simple_link::{handlers, AppState};
+use simplelink::{handlers, AppState};
 use sqlx::postgres::PgPoolOptions;
 use tracing::info;
+
+async fn index() -> Result<actix_files::NamedFile, actix_web::Error> {
+    Ok(actix_files::NamedFile::open("./static/index.html")?)
+}
 
 #[actix_web::main]
 async fn main() -> Result<()> {

@@ -2,7 +2,8 @@ use crate::auth::AuthenticatedUser;
 use crate::{
     error::AppError,
     models::{
-        AuthResponse, Claims, CreateLink, Link, LoginRequest, RegisterRequest, User, UserResponse,
+        AuthResponse, Claims, ClickStats, CreateLink, Link, LoginRequest, RegisterRequest,
+        SourceStats, User, UserResponse,
     },
     AppState,
 };
@@ -304,4 +305,86 @@ pub async fn delete_link(
     tx.commit().await?;
 
     Ok(HttpResponse::NoContent().finish())
+}
+
+pub async fn get_link_clicks(
+    state: web::Data<AppState>,
+    user: AuthenticatedUser,
+    path: web::Path<i32>,
+) -> Result<impl Responder, AppError> {
+    let link_id = path.into_inner();
+
+    // Verify the link belongs to the user
+    let link = sqlx::query!(
+        "SELECT id FROM links WHERE id = $1 AND user_id = $2",
+        link_id,
+        user.user_id
+    )
+    .fetch_optional(&state.db)
+    .await?;
+
+    if link.is_none() {
+        return Err(AppError::NotFound);
+    }
+
+    let clicks = sqlx::query_as!(
+        ClickStats,
+        r#"
+        SELECT 
+            DATE(created_at)::date as "date!",
+            COUNT(*)::bigint as "clicks!"
+        FROM clicks
+        WHERE link_id = $1
+        GROUP BY DATE(created_at)
+        ORDER BY DATE(created_at) ASC  -- Changed from DESC to ASC
+        LIMIT 30
+        "#,
+        link_id
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(HttpResponse::Ok().json(clicks))
+}
+
+pub async fn get_link_sources(
+    state: web::Data<AppState>,
+    user: AuthenticatedUser,
+    path: web::Path<i32>,
+) -> Result<impl Responder, AppError> {
+    let link_id = path.into_inner();
+
+    // Verify the link belongs to the user
+    let link = sqlx::query!(
+        "SELECT id FROM links WHERE id = $1 AND user_id = $2",
+        link_id,
+        user.user_id
+    )
+    .fetch_optional(&state.db)
+    .await?;
+
+    if link.is_none() {
+        return Err(AppError::NotFound);
+    }
+
+    let sources = sqlx::query_as!(
+        SourceStats,
+        r#"
+        SELECT 
+            query_source as "source!",
+            COUNT(*)::bigint as "count!"
+        FROM clicks
+        WHERE link_id = $1
+            AND query_source IS NOT NULL
+            AND query_source != ''
+        GROUP BY query_source
+        ORDER BY COUNT(*) DESC
+        LIMIT 10
+        "#,
+        link_id
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(HttpResponse::Ok().json(sources))
 }

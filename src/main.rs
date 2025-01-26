@@ -1,8 +1,8 @@
-use actix_web::{web, App, HttpServer};
 use actix_cors::Cors;
+use actix_web::{web, App, HttpServer};
 use anyhow::Result;
+use simple_link::{handlers, AppState};
 use sqlx::postgres::PgPoolOptions;
-use simple_link::{AppState, handlers};
 use tracing::info;
 
 #[actix_web::main]
@@ -37,7 +37,7 @@ async fn main() -> Result<()> {
             .allow_any_method()
             .allow_any_header()
             .max_age(3600);
-        
+
         App::new()
             .wrap(cors)
             .app_data(web::Data::new(state.clone()))
@@ -45,14 +45,12 @@ async fn main() -> Result<()> {
                 web::scope("/api")
                     .route("/shorten", web::post().to(handlers::create_short_url))
                     .route("/links", web::get().to(handlers::get_all_links))
+                    .route("/links/{id}", web::delete().to(handlers::delete_link))
                     .route("/auth/register", web::post().to(handlers::register))
                     .route("/auth/login", web::post().to(handlers::login))
                     .route("/health", web::get().to(handlers::health_check)),
             )
-            .service(
-                web::resource("/{short_code}")
-                    .route(web::get().to(handlers::redirect_to_url))
-            )
+            .service(web::resource("/{short_code}").route(web::get().to(handlers::redirect_to_url)))
     })
     .workers(2)
     .backlog(10_000)

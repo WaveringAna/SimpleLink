@@ -1,14 +1,9 @@
 use actix_cors::Cors;
-use actix_files::Files;
-use actix_web::{middleware::DefaultHeaders, web, App, HttpServer};
+use actix_web::{web, App, HttpServer};
 use anyhow::Result;
 use simplelink::{handlers, AppState};
 use sqlx::postgres::PgPoolOptions;
 use tracing::info;
-
-async fn index() -> Result<actix_files::NamedFile, actix_web::Error> {
-    Ok(actix_files::NamedFile::open("./static/index.html")?)
-}
 
 #[actix_web::main]
 async fn main() -> Result<()> {
@@ -53,6 +48,14 @@ async fn main() -> Result<()> {
                     .route("/shorten", web::post().to(handlers::create_short_url))
                     .route("/links", web::get().to(handlers::get_all_links))
                     .route("/links/{id}", web::delete().to(handlers::delete_link))
+                    .route(
+                        "/links/{id}/clicks",
+                        web::get().to(handlers::get_link_clicks),
+                    )
+                    .route(
+                        "/links/{id}/sources",
+                        web::get().to(handlers::get_link_sources),
+                    )
                     .route("/auth/register", web::post().to(handlers::register))
                     .route("/auth/login", web::post().to(handlers::login))
                     .route("/health", web::get().to(handlers::health_check)),

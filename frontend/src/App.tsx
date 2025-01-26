@@ -1,4 +1,4 @@
-import { Container } from './components/ui/container'
+import { ThemeProvider } from "@/components/theme-provider"
 import { Button } from './components/ui/button'
 import { LinkForm } from './components/LinkForm'
 import { LinkList } from './components/LinkList'
@@ -17,28 +17,34 @@ function AppContent() {
 	}
 
 	return (
-		<div className="container max-w-6xl py-8">
-			<div className="space-y-8">
-				<div className="flex items-center justify-between">
-					<h1 className="text-3xl font-bold">URL Shortener</h1>
-					{user && (
-						<div className="flex items-center gap-4">
-							<p className="text-sm text-muted-foreground">Welcome, {user.email}</p>
-							<Button variant="outline" onClick={logout}>
-								Logout
-							</Button>
-						</div>
+		<div className="min-h-screen flex flex-col">
+			<div className="container max-w-6xl mx-auto py-8 flex-1 flex flex-col">
+				<div className="space-y-8 flex-1 flex flex-col justify-center">
+					<div className="flex items-center justify-between">
+						<h1 className="text-3xl font-bold">SimpleLink</h1>
+						{user ? (
+							<div className="flex items-center gap-4">
+								<p className="text-sm text-muted-foreground">Welcome, {user.email}</p>
+								<Button variant="outline" onClick={logout}>
+									Logout
+								</Button>
+							</div>
+						) : (
+							<div className="flex items-center gap-4">
+								<p className="text-sm text-muted-foreground">A link shortening and tracking service</p>
+							</div>
+						)}
+					</div>
+
+					{user ? (
+						<>
+							<LinkForm onSuccess={handleLinkCreated} />
+							<LinkList refresh={refreshCounter} />
+						</>
+					) : (
+						<AuthForms />
 					)}
 				</div>
-
-				{user ? (
-					<>
-						<LinkForm onSuccess={handleLinkCreated} />
-						<LinkList refresh={refreshCounter} />
-					</>
-				) : (
-					<AuthForms />
-				)}
 			</div>
 		</div>
 	)
@@ -46,10 +52,12 @@ function AppContent() {
 
 function App() {
 	return (
-		<AuthProvider>
-			<AppContent />
-			<Toaster />
-		</AuthProvider>
+		<ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+			<AuthProvider>
+				<AppContent />
+				<Toaster />
+			</AuthProvider>
+		</ThemeProvider>
 	)
 }
 

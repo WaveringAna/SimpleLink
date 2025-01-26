@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            query_source as \"source!\",\n            COUNT(*)::bigint as \"count!\"\n        FROM clicks\n        WHERE link_id = $1\n            AND query_source IS NOT NULL\n            AND query_source != ''\n        GROUP BY query_source\n        ORDER BY COUNT(*) DESC\n        LIMIT 10\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "source!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      true,
+      null
+    ]
+  },
+  "hash": "8452fbf45386d160bc99ac6c0917a00bf5dad445ef7d484936ce6e0cbe21c965"
+}

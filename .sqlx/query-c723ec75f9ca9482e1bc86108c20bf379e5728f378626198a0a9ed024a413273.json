@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            DATE(created_at)::date as \"date!\",\n            COUNT(*)::bigint as \"clicks!\"\n        FROM clicks\n        WHERE link_id = $1\n        GROUP BY DATE(created_at)\n        ORDER BY DATE(created_at) ASC  -- Changed from DESC to ASC\n        LIMIT 30\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "date!",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 1,
+        "name": "clicks!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "c723ec75f9ca9482e1bc86108c20bf379e5728f378626198a0a9ed024a413273"
+}

@@ -25,3 +25,13 @@ export interface AuthResponse {
 export interface ApiError {
 	error: string;
 }
+
+export interface ClickStats {
+	date: string;
+	clicks: number;
+}
+
+export interface SourceStats {
+	source: string;
+	count: number;
+}

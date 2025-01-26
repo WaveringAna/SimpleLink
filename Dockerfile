@@ -1,5 +1,29 @@
-# Build stage
-FROM rust:latest as builder
+# Frontend build stage
+FROM oven/bun:latest as frontend-builder
+WORKDIR /app/frontend
+
+# Install bun
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/root/.bun/bin:${PATH}"
+
+# Copy frontend files
+COPY frontend/package.json frontend/bun.lock ./
+RUN bun install
+
+COPY frontend/ ./
+
+# Build frontend with environment variables
+# These can be overridden at build time
+ARG VITE_API_URL=http://localhost:3000
+ARG NODE_ENV=production
+ENV VITE_API_URL=$VITE_API_URL
+ENV NODE_ENV=$NODE_ENV
+
+RUN echo "VITE_API_URL=${VITE_API_URL}" > .env.production
+RUN bun run build
+
+# Rust build stage
+FROM rust:latest as backend-builder
 
 # Install PostgreSQL client libraries and SSL dependencies
 RUN apt-get update && \
@@ -16,8 +40,9 @@ COPY src/ src/
 COPY migrations/ migrations/
 COPY .sqlx/ .sqlx/
 
-# Build your application
-RUN cargo build --release
+# Build application
+ARG RUST_ENV=release
+RUN cargo build --${RUST_ENV}
 
 # Runtime stage
 FROM debian:bookworm-slim
@@ -29,17 +54,19 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-# Copy the binary from builder
-COPY --from=builder /usr/src/app/target/release/simplelink /app/simplelink
-# Copy migrations folder for SQLx
-COPY --from=builder /usr/src/app/migrations /app/migrations
+# Copy the binary and migrations from backend builder
+COPY --from=backend-builder /usr/src/app/target/release/simplelink /app/simplelink
+COPY --from=backend-builder /usr/src/app/migrations /app/migrations
 
-# Expose the port (this is just documentation)
-EXPOSE 8080
+# Copy static files from frontend builder
+COPY --from=frontend-builder /app/frontend/dist /app/static
+
+# Expose the port
+EXPOSE 3000
 
 # Set default network configuration
 ENV SERVER_HOST=0.0.0.0
-ENV SERVER_PORT=8080
+ENV SERVER_PORT=3000
 
 # Run the binary
 CMD ["./simplelink"]

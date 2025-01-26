@@ -1,22 +1,50 @@
 version: '3.8'
+
+# Define reusable environment variables
+x-environment: &common-env
+  SERVER_HOST: 0.0.0.0
+  SERVER_PORT: 3000
+  RUST_LOG: info
+
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Build-time variables
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
+        NODE_ENV: ${NODE_ENV:-production}
+        RUST_ENV: ${RUST_ENV:-release}
+    container_name: shortener-app
+    ports:
+      - "3000:3000"
+    environment:
+      <<: *common-env # Include common environment variables
+      DATABASE_URL: postgres://shortener:shortener123@db:5432/shortener
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-me-in-production}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
   db:
     image: postgres:15-alpine
     container_name: shortener-db
     environment:
-      POSTGRES_DB: shortener
-      POSTGRES_USER: shortener
-      POSTGRES_PASSWORD: shortener123
+      POSTGRES_DB: ${POSTGRES_DB:-shortener}
+      POSTGRES_USER: ${POSTGRES_USER:-shortener}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shortener123}
     ports:
       - "5432:5432"
     volumes:
       - shortener-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U shortener"]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-shortener}" ]
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
 volumes:
   shortener-data:
-

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { CreateLinkRequest, Link, AuthResponse } from '../types/api';
+import { CreateLinkRequest, Link, AuthResponse, ClickStats, SourceStats } from '../types/api';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -46,3 +46,15 @@ export const getAllLinks = async () => {
 export const deleteLink = async (id: number) => {
 	await api.delete(`/links/${id}`);
 };
+
+export const getLinkClickStats = async (id: number) => {
+	const response = await api.get<ClickStats[]>(`/links/${id}/clicks`);
+	return response.data;
+};
+
+export const getLinkSourceStats = async (id: number) => {
+	const response = await api.get<SourceStats[]>(`/links/${id}/sources`);
+	return response.data;
+};
+
+export { api };

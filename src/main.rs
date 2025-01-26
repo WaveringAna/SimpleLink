@@ -28,7 +28,9 @@ async fn main() -> Result<()> {
 
     let state = AppState { db: pool };
 
-    info!("Starting server at http://127.0.0.1:8080");
+    let host = std::env::var("SERVER_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
+    let port = std::env::var("SERVER_PORT").unwrap_or_else(|_| "8080".to_string());
+    info!("Starting server at http://{}:{}", host, port);
 
     // Start HTTP server
     HttpServer::new(move || {
@@ -54,7 +56,7 @@ async fn main() -> Result<()> {
     })
     .workers(2)
     .backlog(10_000)
-    .bind("127.0.0.1:8080")?
+    .bind(format!("{}:{}", host, port))?
     .run()
     .await?;
 

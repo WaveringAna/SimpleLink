@@ -56,7 +56,7 @@ export function AuthForms() {
 
     return (
         <Card className="w-full max-w-md mx-auto p-6">
-            <Tabs value={activeTab} onValueChange={(value: 'login' | 'register') => setActiveTab(value)}>
+            <Tabs value={activeTab} onValueChange={(value: string) => setActiveTab(value as 'login' | 'register')}>
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="login">Login</TabsTrigger>
                     <TabsTrigger value="register">Register</TabsTrigger>

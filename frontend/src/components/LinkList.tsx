@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from '../types/api'
 import { getAllLinks, deleteLink } from '../api/client'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
 	Table,
 	TableBody,
@@ -9,6 +10,9 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
+import { useToast } from "@/hooks/use-toast"
+import { Copy, Trash2 } from "lucide-react"
 import {
 	Dialog,
 	DialogContent,
@@ -17,14 +21,12 @@ import {
 	DialogDescription,
 	DialogFooter,
 } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { useToast } from "@/hooks/use-toast"
 
 interface LinkListProps {
-	refresh: number
+	refresh?: number;
 }
 
-export function LinkList({ refresh }: LinkListProps) {
+export function LinkList({ refresh = 0 }: LinkListProps) {
 	const [links, setLinks] = useState<Link[]>([])
 	const [loading, setLoading] = useState(true)
 	const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; linkId: number | null }>({
@@ -51,7 +53,7 @@ export function LinkList({ refresh }: LinkListProps) {
 
 	useEffect(() => {
 		fetchLinks()
-	}, [refresh])
+	}, [refresh]) // Re-fetch when refresh counter changes
 
 	const handleDelete = async () => {
 		if (!deleteModal.linkId) return
@@ -61,8 +63,7 @@ export function LinkList({ refresh }: LinkListProps) {
 			await fetchLinks()
 			setDeleteModal({ isOpen: false, linkId: null })
 			toast({
-				title: "Link deleted",
-				description: "The link has been successfully deleted.",
+				description: "Link deleted successfully",
 			})
 		} catch (err) {
 			toast({
@@ -73,12 +74,19 @@ export function LinkList({ refresh }: LinkListProps) {
 		}
 	}
 
+	const handleCopy = (shortCode: string) => {
+		navigator.clipboard.writeText(`http://localhost:8080/${shortCode}`)
+		toast({
+			description: "Link copied to clipboard",
+		})
+	}
+
 	if (loading && !links.length) {
 		return <div className="text-center py-4">Loading...</div>
 	}
 
 	return (
-		<div className="space-y-4">
+		<>
 			<Dialog open={deleteModal.isOpen} onOpenChange={(open) => setDeleteModal({ isOpen: open, linkId: null })}>
 				<DialogContent>
 					<DialogHeader>
@@ -98,48 +106,63 @@ export function LinkList({ refresh }: LinkListProps) {
 				</DialogContent>
 			</Dialog>
 
-			<Table>
-				<TableHeader>
-					<TableRow>
-						<TableHead>Short Code</TableHead>
-						<TableHead>Original URL</TableHead>
-						<TableHead>Clicks</TableHead>
-						<TableHead>Created</TableHead>
-						<TableHead>Actions</TableHead>
-					</TableRow>
-				</TableHeader>
-				<TableBody>
-					{links.map((link) => (
-						<TableRow key={link.id}>
-							<TableCell>{link.short_code}</TableCell>
-							<TableCell className="max-w-[300px] truncate">{link.original_url}</TableCell>
-							<TableCell>{link.clicks}</TableCell>
-							<TableCell>{new Date(link.created_at).toLocaleDateString()}</TableCell>
-							<TableCell>
-								<div className="flex gap-2">
-									<Button
-										variant="secondary"
-										size="sm"
-										onClick={() => {
-											navigator.clipboard.writeText(`http://localhost:8080/${link.short_code}`)
-											toast({ description: "Link copied to clipboard" })
-										}}
-									>
-										Copy
-									</Button>
-									<Button
-										variant="destructive"
-										size="sm"
-										onClick={() => setDeleteModal({ isOpen: true, linkId: link.id })}
-									>
-										Delete
-									</Button>
-								</div>
-							</TableCell>
-						</TableRow>
-					))}
-				</TableBody>
-			</Table>
-		</div>
+			<Card>
+				<CardHeader>
+					<CardTitle>Your Links</CardTitle>
+					<CardDescription>Manage and track your shortened links</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<div className="rounded-md border">
+						<Table>
+							<TableHeader>
+								<TableRow>
+									<TableHead>Short Code</TableHead>
+									<TableHead className="hidden md:table-cell">Original URL</TableHead>
+									<TableHead>Clicks</TableHead>
+									<TableHead className="hidden md:table-cell">Created</TableHead>
+									<TableHead>Actions</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								{links.map((link) => (
+									<TableRow key={link.id}>
+										<TableCell className="font-medium">{link.short_code}</TableCell>
+										<TableCell className="hidden md:table-cell max-w-[300px] truncate">
+											{link.original_url}
+										</TableCell>
+										<TableCell>{link.clicks}</TableCell>
+										<TableCell className="hidden md:table-cell">
+											{new Date(link.created_at).toLocaleDateString()}
+										</TableCell>
+										<TableCell>
+											<div className="flex gap-2">
+												<Button
+													variant="ghost"
+													size="icon"
+													className="h-8 w-8"
+													onClick={() => handleCopy(link.short_code)}
+												>
+													<Copy className="h-4 w-4" />
+													<span className="sr-only">Copy link</span>
+												</Button>
+												<Button
+													variant="ghost"
+													size="icon"
+													className="h-8 w-8 text-destructive"
+													onClick={() => setDeleteModal({ isOpen: true, linkId: link.id })}
+												>
+													<Trash2 className="h-4 w-4" />
+													<span className="sr-only">Delete link</span>
+												</Button>
+											</div>
+										</TableCell>
+									</TableRow>
+								))}
+							</TableBody>
+						</Table>
+					</div>
+				</CardContent>
+			</Card>
+		</>
 	)
 }

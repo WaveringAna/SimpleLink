@@ -2,5 +2,8 @@
 **/node_modules
 node_modules
 .env
-.env.*
 /static
+/target
+/release
+release.tar.gz
+*.log

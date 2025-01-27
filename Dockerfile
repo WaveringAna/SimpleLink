@@ -1,5 +1,21 @@
-# Build stage
-FROM rust:latest as builder
+# Frontend build stage
+FROM oven/bun:latest AS frontend-builder
+
+WORKDIR /usr/src/frontend
+
+# Copy frontend files
+COPY frontend/package*.json ./
+RUN bun install
+
+COPY frontend/ ./
+
+# Build frontend with production configuration
+ARG API_URL=http://localhost:8080
+ENV VITE_API_URL=${API_URL}
+RUN bun run build
+
+# Rust build stage
+FROM rust:latest AS backend-builder
 
 # Install PostgreSQL client libraries and SSL dependencies
 RUN apt-get update && \
@@ -16,7 +32,10 @@ COPY src/ src/
 COPY migrations/ migrations/
 COPY .sqlx/ .sqlx/
 
-# Build your application
+# Create static directory and copy frontend build
+COPY --from=frontend-builder /usr/src/frontend/dist/ static/
+
+# Build the application
 RUN cargo build --release
 
 # Runtime stage
@@ -30,9 +49,13 @@ RUN apt-get update && \
 WORKDIR /app
 
 # Copy the binary from builder
-COPY --from=builder /usr/src/app/target/release/simplelink /app/simplelink
+COPY --from=backend-builder /usr/src/app/target/release/simplelink /app/simplelink
+
 # Copy migrations folder for SQLx
-COPY --from=builder /usr/src/app/migrations /app/migrations
+COPY --from=backend-builder /usr/src/app/migrations /app/migrations
+
+# Copy static files
+COPY --from=backend-builder /usr/src/app/static /app/static
 
 # Expose the port (this is just documentation)
 EXPOSE 8080

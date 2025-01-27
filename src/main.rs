@@ -1,4 +1,5 @@
 use actix_cors::Cors;
+use actix_files as fs;
 use actix_web::{web, App, HttpServer};
 use anyhow::Result;
 use simplelink::{handlers, AppState};
@@ -61,6 +62,7 @@ async fn main() -> Result<()> {
                     .route("/health", web::get().to(handlers::health_check)),
             )
             .service(web::resource("/{short_code}").route(web::get().to(handlers::redirect_to_url)))
+            .service(fs::Files::new("/", "./static").index_file("index.html"))
     })
     .workers(2)
     .backlog(10_000)

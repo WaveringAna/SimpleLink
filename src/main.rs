@@ -2,6 +2,7 @@ use actix_cors::Cors;
 use actix_files as fs;
 use actix_web::{web, App, HttpServer};
 use anyhow::Result;
+use simplelink::check_and_generate_admin_token;
 use simplelink::{handlers, AppState};
 use sqlx::postgres::PgPoolOptions;
 use tracing::info;
@@ -27,7 +28,12 @@ async fn main() -> Result<()> {
     // Run database migrations
     sqlx::migrate!("./migrations").run(&pool).await?;
 
-    let state = AppState { db: pool };
+    let admin_token = check_and_generate_admin_token(&pool).await?;
+
+    let state = AppState {
+        db: pool,
+        admin_token,
+    };
 
     let host = std::env::var("SERVER_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
     let port = std::env::var("SERVER_PORT").unwrap_or_else(|_| "8080".to_string());

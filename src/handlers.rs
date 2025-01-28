@@ -189,6 +189,27 @@ pub async fn register(
     state: web::Data<AppState>,
     payload: web::Json<RegisterRequest>,
 ) -> Result<impl Responder, AppError> {
+    // Check if any users exist
+    let user_count = sqlx::query!("SELECT COUNT(*) as count FROM users")
+        .fetch_one(&state.db)
+        .await?
+        .count
+        .unwrap_or(0);
+
+    // If users exist, registration is closed - no exceptions
+    if user_count > 0 {
+        return Err(AppError::Auth("Registration is closed".to_string()));
+    }
+
+    // Verify admin token for first user
+    match (&state.admin_token, &payload.admin_token) {
+        (Some(stored_token), Some(provided_token)) if stored_token == provided_token => {
+            // Token matches, proceed with registration
+        }
+        _ => return Err(AppError::Auth("Invalid admin setup token".to_string())),
+    }
+
+    // Check if email already exists
     let exists = sqlx::query!("SELECT id FROM users WHERE email = $1", payload.email)
         .fetch_optional(&state.db)
         .await?;

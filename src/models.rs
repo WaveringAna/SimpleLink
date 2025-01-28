@@ -49,6 +49,7 @@ pub struct LoginRequest {
 pub struct RegisterRequest {
     pub email: String,
     pub password: String,
+    pub admin_token: Option<String>,
 }
 
 #[derive(Serialize)]

@@ -35,3 +35,9 @@ export interface SourceStats {
 	source: string;
 	count: number;
 }
+
+export interface RegisterRequest {
+	email: string;
+	password: string;
+	admin_token: string;
+}

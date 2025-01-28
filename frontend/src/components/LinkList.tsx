@@ -81,9 +81,11 @@ export function LinkList({ refresh = 0 }: LinkListProps) {
 	}
 
 	const handleCopy = (shortCode: string) => {
-		navigator.clipboard.writeText(`http://localhost:8080/${shortCode}`)
+		// Use import.meta.env.VITE_BASE_URL or fall back to window.location.origin
+		const baseUrl = import.meta.env.VITE_API_URL || window.location.origin
+		navigator.clipboard.writeText(`${baseUrl}/${shortCode}`)
 		toast({
-			description: "Link copied to clipboard",
+		  description: "Link copied to clipboard",
 		})
 	}
 

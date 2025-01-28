@@ -24,14 +24,14 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - API_URL=${API_URL:-http://localhost:8080}
+        - API_URL=${API_URL:-http://localhost:3000}
     container_name: shortener-app
     ports:
-      - "8080:8080"
+      - "3000:3000"
     environment:
       - DATABASE_URL=postgresql://shortener:shortener123@db:5432/shortener
       - SERVER_HOST=0.0.0.0
-      - SERVER_PORT=8080
+      - SERVER_PORT=3000
     depends_on:
       db:
         condition: service_healthy

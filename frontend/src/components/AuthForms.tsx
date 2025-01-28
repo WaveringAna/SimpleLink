@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast'
 const formSchema = z.object({
     email: z.string().email('Invalid email address'),
     password: z.string().min(6, 'Password must be at least 6 characters long'),
+    adminToken: z.string(),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -34,6 +35,7 @@ export function AuthForms() {
         defaultValues: {
             email: '',
             password: '',
+            adminToken: '',
         },
     })
 
@@ -42,14 +44,14 @@ export function AuthForms() {
             if (activeTab === 'login') {
                 await login(values.email, values.password)
             } else {
-                await register(values.email, values.password)
+                await register(values.email, values.password, values.adminToken)
             }
             form.reset()
         } catch (err: any) {
             toast({
                 variant: 'destructive',
                 title: 'Error',
-                description: err.response?.data?.error || 'An error occurred',
+                description: err.response?.data || 'An error occurred',
             })
         }
     }
@@ -92,6 +94,22 @@ export function AuthForms() {
                                     </FormItem>
                                 )}
                             />
+
+                            {activeTab === 'register' && (
+                                <FormField
+                                    control={form.control}
+                                    name="adminToken"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Admin Setup Token</FormLabel>
+                                            <FormControl>
+                                                <Input type="text" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            )}
 
                             <Button type="submit" className="w-full">
                                 {activeTab === 'login' ? 'Sign in' : 'Create account'}

@@ -1,8 +1,80 @@
+use anyhow::Result;
+use chrono::NaiveDate;
+use futures::future::BoxFuture;
+use serde::{Deserialize, Serialize};
+use sqlx::postgres::PgRow;
+use sqlx::sqlite::SqliteRow;
+use sqlx::FromRow;
+use sqlx::Pool;
+use sqlx::Postgres;
+use sqlx::Sqlite;
+use sqlx::Transaction;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use chrono::NaiveDate;
-use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
+#[derive(Clone)]
+pub enum DatabasePool {
+    Postgres(Pool<Postgres>),
+    Sqlite(Pool<Sqlite>),
+}
+
+impl DatabasePool {
+    pub async fn begin(&self) -> Result<Box<dyn std::any::Any + Send>> {
+        match self {
+            DatabasePool::Postgres(pool) => Ok(Box::new(pool.begin().await?)),
+            DatabasePool::Sqlite(pool) => Ok(Box::new(pool.begin().await?)),
+        }
+    }
+
+    pub async fn fetch_optional<T>(&self, pg_query: &str, sqlite_query: &str) -> Result<Option<T>>
+    where
+        T: for<'r> FromRow<'r, PgRow> + for<'r> FromRow<'r, SqliteRow> + Send + Sync + Unpin,
+    {
+        match self {
+            DatabasePool::Postgres(pool) => {
+                Ok(sqlx::query_as(pg_query).fetch_optional(pool).await?)
+            }
+            DatabasePool::Sqlite(pool) => {
+                Ok(sqlx::query_as(sqlite_query).fetch_optional(pool).await?)
+            }
+        }
+    }
+
+    pub async fn execute(&self, pg_query: &str, sqlite_query: &str) -> Result<()> {
+        match self {
+            DatabasePool::Postgres(pool) => {
+                sqlx::query(pg_query).execute(pool).await?;
+                Ok(())
+            }
+            DatabasePool::Sqlite(pool) => {
+                sqlx::query(sqlite_query).execute(pool).await?;
+                Ok(())
+            }
+        }
+    }
+
+    pub async fn transaction<'a, F, R>(&'a self, f: F) -> Result<R>
+    where
+        F: for<'c> Fn(&'c mut Transaction<'_, Postgres>) -> BoxFuture<'c, Result<R>>
+            + for<'c> Fn(&'c mut Transaction<'_, Sqlite>) -> BoxFuture<'c, Result<R>>
+            + Copy,
+        R: Send + 'static,
+    {
+        match self {
+            DatabasePool::Postgres(pool) => {
+                let mut tx = pool.begin().await?;
+                let result = f(&mut tx).await?;
+                tx.commit().await?;
+                Ok(result)
+            }
+            DatabasePool::Sqlite(pool) => {
+                let mut tx = pool.begin().await?;
+                let result = f(&mut tx).await?;
+                tx.commit().await?;
+                Ok(result)
+            }
+        }
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {

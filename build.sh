@@ -3,6 +3,7 @@
 # Default values
 API_URL="http://localhost:8080"
 RELEASE_MODE=false
+BINARY_MODE=false
 
 # Parse command line arguments
 for arg in "$@"
@@ -14,6 +15,10 @@ do
         ;;
         --release)
         RELEASE_MODE=true
+        shift
+        ;;
+        --binary)
+        BINARY_MODE=true
         shift
         ;;
     esac
@@ -45,13 +50,9 @@ npm install
 npm run build
 cd ..
 
-# Create static directory if it doesn't exist
+# Create static directory and copy frontend build
 mkdir -p static
-
-# Clean existing static files
 rm -rf static/*
-
-# Copy built files to static directory
 cp -r frontend/dist/* static/
 
 # Build Rust project
@@ -62,15 +63,16 @@ if [ "$RELEASE_MODE" = true ]; then
     # Create release directory
     mkdir -p release
     
-    # Copy binary and static files to release directory
+    # Copy only the binary to release directory
     cp target/release/simplelink release/
-    cp -r static release/
     cp .env.example release/.env
     
     # Create a tar archive
     tar -czf release.tar.gz release/
     
     echo "Release archive created: release.tar.gz"
+elif [ "$BINARY_MODE" = true ]; then
+    cargo build --release
 else
     cargo build
 fi

@@ -1,11 +1,27 @@
 use actix_cors::Cors;
-use actix_files as fs;
-use actix_web::{web, App, HttpServer};
+use actix_web::{web, App, HttpResponse, HttpServer};
 use anyhow::Result;
+use rust_embed::RustEmbed;
 use simplelink::check_and_generate_admin_token;
 use simplelink::{handlers, AppState};
 use sqlx::postgres::PgPoolOptions;
 use tracing::info;
+
+#[derive(RustEmbed)]
+#[folder = "static/"]
+struct Asset;
+
+async fn serve_static_file(path: &str) -> HttpResponse {
+    match Asset::get(path) {
+        Some(content) => {
+            let mime = mime_guess::from_path(path).first_or_octet_stream();
+            HttpResponse::Ok()
+                .content_type(mime.as_ref())
+                .body(content.data.into_owned())
+        }
+        None => HttpResponse::NotFound().body("404 Not Found"),
+    }
+}
 
 #[actix_web::main]
 async fn main() -> Result<()> {
@@ -68,7 +84,11 @@ async fn main() -> Result<()> {
                     .route("/health", web::get().to(handlers::health_check)),
             )
             .service(web::resource("/{short_code}").route(web::get().to(handlers::redirect_to_url)))
-            .service(fs::Files::new("/", "./static").index_file("index.html"))
+            .default_service(web::route().to(|req: actix_web::HttpRequest| async move {
+                let path = req.path().trim_start_matches('/');
+                let path = if path.is_empty() { "index.html" } else { path };
+                serve_static_file(path).await
+            }))
     })
     .workers(2)
     .backlog(10_000)

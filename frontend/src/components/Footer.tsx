@@ -36,7 +36,7 @@ export function Footer() {
                         </Button>
 
                         <Button variant="ghost" size="icon">
-                            <a href="https://l.nekomimi.pet/twitter?source=shortener" target="_blank" rel="noopener noreferrer">
+                            <a href="https://l.nekomimi.pet/bsky?source=shortener" target="_blank" rel="noopener noreferrer">
                                 <SiBluesky className="h-4 w-4" />
                             </a>
                             <span className="sr-only">Twitter</span>

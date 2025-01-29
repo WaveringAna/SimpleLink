@@ -182,7 +182,7 @@ fn generate_short_code() -> String {
     use uuid::Uuid;
 
     let uuid = Uuid::new_v4();
-    encode(uuid.as_u128() as u64).chars().take(8).collect()
+    encode(uuid.as_u128() as u64).chars().take(32).collect()
 }
 
 pub async fn register(

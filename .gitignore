@@ -9,3 +9,5 @@ release.tar.gz
 *.log
 .DS_STORE
 admin-setup-token.txt
+package-lock.json
+bun.lock

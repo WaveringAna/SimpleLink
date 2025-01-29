@@ -7,3 +7,5 @@ node_modules
 /release
 release.tar.gz
 *.log
+.DS_STORE
+admin-setup-token.txt

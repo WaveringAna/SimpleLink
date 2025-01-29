@@ -19,6 +19,8 @@ git clone https://github.com/waveringana/simplelink && cd simplelink
 cargo run
 ```
 
+On an empty database, an admin-setup-token.txt is created as well as pasted into the terminal output. This is needed to make the admin account.
+
 Alternatively if you want a binary form
 ```bash
 ./build.sh --binary

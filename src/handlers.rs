@@ -564,8 +564,8 @@ pub async fn get_link_clicks(
             sqlx::query_as::<_, ClickStats>(
                 r#"
                 SELECT 
-                    DATE(created_at) as date,
-                    COUNT(*) as clicks
+                    DATE(created_at)::text as date,
+                    COUNT(*)::bigint as clicks
                 FROM clicks
                 WHERE link_id = $1
                 GROUP BY DATE(created_at)
@@ -643,8 +643,8 @@ pub async fn get_link_sources(
             sqlx::query_as::<_, SourceStats>(
                 r#"
                 SELECT 
-                    query_source as source,  // Remove the ! mark
-                    COUNT(*)::bigint as count  // Remove the ! mark
+                    query_source as source,
+                    COUNT(*)::bigint as count
                 FROM clicks
                 WHERE link_id = $1
                     AND query_source IS NOT NULL

@@ -37,10 +37,13 @@ pub async fn create_db_pool() -> Result<DatabasePool> {
         _ => {
             info!("No PostgreSQL connection string found, using SQLite");
 
+            // Get the project root directory
+            let project_root = std::env::current_dir()?;
+            let data_dir = project_root.join("data");
+            
             // Create a data directory if it doesn't exist
-            let data_dir = std::path::Path::new("data");
             if !data_dir.exists() {
-                std::fs::create_dir_all(data_dir)?;
+                std::fs::create_dir_all(&data_dir)?;
             }
 
             let db_path = data_dir.join("simplelink.db");
@@ -102,7 +105,6 @@ pub async fn check_and_generate_admin_token(db: &DatabasePool) -> anyhow::Result
     };
 
     if user_count == 0 {
-        // Generate a random token using simple characters
         let token: String = (0..32)
             .map(|_| {
                 let idx = rand::thread_rng().gen_range(0..62);
@@ -114,8 +116,12 @@ pub async fn check_and_generate_admin_token(db: &DatabasePool) -> anyhow::Result
             })
             .collect();
 
+        // Get the project root directory
+        let project_root = std::env::current_dir()?;
+        let token_path = project_root.join("admin-setup-token.txt");
+        
         // Save token to file
-        let mut file = File::create("admin-setup-token.txt")?;
+        let mut file = File::create(token_path)?;
         writeln!(file, "{}", token)?;
 
         info!("No users found - generated admin setup token");

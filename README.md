@@ -31,10 +31,10 @@ then check /target/release for the binary named `SimpleGit`
 ```bash
 docker build --build-arg API_URL=http://localhost:8080 -t simplelink .
 docker run -p 8080:8080 \
-    -e JWT_SECRET=change-me-in-production \ 
-    -e DATABASE_URL=postgres://user:password@host:port/database \ 
+    -e JWT_SECRET=change-me-in-production \
+    -v simplelink_data:/data \
     simplelink
 ```
 
 ### From Docker Compose
-Adjust the included docker-compose.yml to your liking, it includes a postgres config as well.
+Adjust the included docker-compose.yml to your liking; it includes a postgres config as well.

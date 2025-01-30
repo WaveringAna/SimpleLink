@@ -63,14 +63,25 @@ export const deleteLink = async (id: number) => {
 };
 
 export const getLinkClickStats = async (id: number) => {
-	const response = await api.get<ClickStats[]>(`/links/${id}/clicks`);
-	return response.data;
+	try {
+		const response = await api.get<ClickStats[]>(`/links/${id}/clicks`);
+		return response.data;
+	} catch (error) {
+		console.error('Error fetching click stats:', error);
+		throw error;
+	}
 };
 
 export const getLinkSourceStats = async (id: number) => {
-	const response = await api.get<SourceStats[]>(`/links/${id}/sources`);
-	return response.data;
+	try {
+		const response = await api.get<SourceStats[]>(`/links/${id}/sources`);
+		return response.data;
+	} catch (error) {
+		console.error('Error fetching source stats:', error);
+		throw error;
+	}
 };
+
 
 export const checkFirstUser = async () => {
 	const response = await api.get<{ isFirstUser: boolean }>('/auth/check-first-user');

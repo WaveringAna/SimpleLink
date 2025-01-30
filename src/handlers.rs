@@ -537,31 +537,21 @@ pub async fn get_link_clicks(
 ) -> Result<impl Responder, AppError> {
     let link_id = path.into_inner();
 
-    // Verify the link belongs to the user
+    // First verify the link belongs to the user
     let link = match &state.db {
         DatabasePool::Postgres(pool) => {
-            let mut tx = pool.begin().await?;
-            let link = sqlx::query_as::<Postgres, (i32,)>(
-                "SELECT id FROM links WHERE id = $1 AND user_id = $2",
-            )
-            .bind(link_id)
-            .bind(user.user_id)
-            .fetch_optional(&mut *tx)
-            .await?;
-            tx.commit().await?;
-            link
+            sqlx::query_as::<_, (i32,)>("SELECT id FROM links WHERE id = $1 AND user_id = $2")
+                .bind(link_id)
+                .bind(user.user_id)
+                .fetch_optional(pool)
+                .await?
         }
         DatabasePool::Sqlite(pool) => {
-            let mut tx = pool.begin().await?;
-            let link = sqlx::query_as::<Sqlite, (i32,)>(
-                "SELECT id FROM links WHERE id = ? AND user_id = ?",
-            )
-            .bind(link_id)
-            .bind(user.user_id)
-            .fetch_optional(&mut *tx)
-            .await?;
-            tx.commit().await?;
-            link
+            sqlx::query_as::<_, (i32,)>("SELECT id FROM links WHERE id = ? AND user_id = ?")
+                .bind(link_id)
+                .bind(user.user_id)
+                .fetch_optional(pool)
+                .await?
         }
     };
 
@@ -571,11 +561,11 @@ pub async fn get_link_clicks(
 
     let clicks = match &state.db {
         DatabasePool::Postgres(pool) => {
-            sqlx::query_as::<Postgres, ClickStats>(
+            sqlx::query_as::<_, ClickStats>(
                 r#"
                 SELECT 
-                    DATE(created_at)::date as "date!",
-                    COUNT(*)::bigint as "clicks!"
+                    DATE(created_at) as date,
+                    COUNT(*) as clicks
                 FROM clicks
                 WHERE link_id = $1
                 GROUP BY DATE(created_at)
@@ -588,11 +578,11 @@ pub async fn get_link_clicks(
             .await?
         }
         DatabasePool::Sqlite(pool) => {
-            sqlx::query_as::<Sqlite, ClickStats>(
+            sqlx::query_as::<_, ClickStats>(
                 r#"
                 SELECT 
-                    DATE(created_at) as "date!",
-                    COUNT(*) as "clicks!"
+                    DATE(created_at) as date,
+                    COUNT(*) as clicks
                 FROM clicks
                 WHERE link_id = ?
                 GROUP BY DATE(created_at)
@@ -650,11 +640,11 @@ pub async fn get_link_sources(
 
     let sources = match &state.db {
         DatabasePool::Postgres(pool) => {
-            sqlx::query_as::<Postgres, SourceStats>(
+            sqlx::query_as::<_, SourceStats>(
                 r#"
                 SELECT 
-                    query_source as "source!",
-                    COUNT(*)::bigint as "count!"
+                    query_source as source,  // Remove the ! mark
+                    COUNT(*)::bigint as count  // Remove the ! mark
                 FROM clicks
                 WHERE link_id = $1
                     AND query_source IS NOT NULL
@@ -669,11 +659,11 @@ pub async fn get_link_sources(
             .await?
         }
         DatabasePool::Sqlite(pool) => {
-            sqlx::query_as::<Sqlite, SourceStats>(
+            sqlx::query_as::<_, SourceStats>(
                 r#"
                 SELECT 
-                    query_source as "source!",
-                    COUNT(*) as "count!"
+                    query_source as source,
+                    COUNT(*) as count
                 FROM clicks
                 WHERE link_id = ?
                     AND query_source IS NOT NULL

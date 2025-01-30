@@ -9,6 +9,7 @@ import {
     ResponsiveContainer,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "@/hooks/use-toast"
 import { useState, useEffect } from "react";
 
 import { getLinkClickStats, getLinkSourceStats } from '../api/client';
@@ -36,13 +37,18 @@ export function StatisticsModal({ isOpen, onClose, linkId }: StatisticsModalProp
                     ]);
                     setClicksOverTime(clicksData);
                     setSourcesData(sourcesData);
-                } catch (error) {
+                } catch (error: any) {
                     console.error("Failed to fetch statistics:", error);
+                    toast({
+                        variant: "destructive",
+                        title: "Error",
+                        description: error.response?.data || "Failed to load statistics",
+                    });
                 } finally {
                     setLoading(false);
                 }
             };
-
+    
             fetchData();
         }
     }, [isOpen, linkId]);

@@ -1,5 +1,4 @@
 use anyhow::Result;
-use chrono::NaiveDate;
 use futures::future::BoxFuture;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgRow;
@@ -145,7 +144,7 @@ pub struct User {
 
 #[derive(sqlx::FromRow, Serialize)]
 pub struct ClickStats {
-    pub date: NaiveDate,
+    pub date: String,
     pub clicks: i64,
 }
 

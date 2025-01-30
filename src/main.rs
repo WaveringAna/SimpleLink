@@ -72,6 +72,10 @@ async fn main() -> Result<()> {
                     )
                     .route("/auth/register", web::post().to(handlers::register))
                     .route("/auth/login", web::post().to(handlers::login))
+                    .route(
+                        "/auth/check-first-user",
+                        web::get().to(handlers::check_first_user),
+                    )
                     .route("/health", web::get().to(handlers::health_check)),
             )
             .service(web::resource("/{short_code}").route(web::get().to(handlers::redirect_to_url)))

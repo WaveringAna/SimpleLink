@@ -16,6 +16,7 @@ use argon2::{Argon2, PasswordHash, PasswordHasher};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use lazy_static::lazy_static;
 use regex::Regex;
+use serde_json::json;
 use sqlx::{Postgres, Sqlite};
 
 lazy_static! {
@@ -689,4 +690,25 @@ pub async fn get_link_sources(
     };
 
     Ok(HttpResponse::Ok().json(sources))
+}
+
+pub async fn check_first_user(state: web::Data<AppState>) -> Result<impl Responder, AppError> {
+    let user_count = match &state.db {
+        DatabasePool::Postgres(pool) => {
+            sqlx::query_as::<Postgres, (i64,)>("SELECT COUNT(*)::bigint FROM users")
+                .fetch_one(pool)
+                .await?
+                .0
+        }
+        DatabasePool::Sqlite(pool) => {
+            sqlx::query_as::<Sqlite, (i64,)>("SELECT COUNT(*) FROM users")
+                .fetch_one(pool)
+                .await?
+                .0
+        }
+    };
+
+    Ok(HttpResponse::Ok().json(json!({
+        "isFirstUser": user_count == 0
+    })))
 }

@@ -72,4 +72,9 @@ export const getLinkSourceStats = async (id: number) => {
 	return response.data;
 };
 
+export const checkFirstUser = async () => {
+	const response = await api.get<{ isFirstUser: boolean }>('/auth/check-first-user');
+	return response.data.isFirstUser;
+};
+
 export { api };

@@ -10,7 +10,7 @@ A very performant and light (6mb in memory) link shortener and tracker. Written 
 ### From Source
 First configure .env.example and save it to .env
 
-The project will not run withot DATABASE_URL set. (TODO add sqlite support)
+If DATABASE_URL is set, it will connect to a Postgres DB. If blank, it will use an sqlite db in /data
 
 ```bash
 #set api-domain to where you will be deploying the link shortener, eg: link.example.com, default is localhost:8080

@@ -3,8 +3,8 @@ use actix_web::{web, App, HttpResponse, HttpServer};
 use anyhow::Result;
 use rust_embed::RustEmbed;
 use simplelink::check_and_generate_admin_token;
+use simplelink::{create_db_pool, run_migrations};
 use simplelink::{handlers, AppState};
-use sqlx::postgres::PgPoolOptions;
 use tracing::info;
 
 #[derive(RustEmbed)]
@@ -31,18 +31,9 @@ async fn main() -> Result<()> {
     // Initialize logging
     tracing_subscriber::fmt::init();
 
-    // Database connection string from environment
-    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-
     // Create database connection pool
-    let pool = PgPoolOptions::new()
-        .max_connections(5)
-        .acquire_timeout(std::time::Duration::from_secs(3))
-        .connect(&database_url)
-        .await?;
-
-    // Run database migrations
-    sqlx::migrate!("./migrations").run(&pool).await?;
+    let pool = create_db_pool().await?;
+    run_migrations(&pool).await?;
 
     let admin_token = check_and_generate_admin_token(&pool).await?;
 

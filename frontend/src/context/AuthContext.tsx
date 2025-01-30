@@ -23,6 +23,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(userData);
         }
         setIsLoading(false);
+
+        const handleUnauthorized = () => {
+            setUser(null);
+        };
+
+        window.addEventListener('unauthorized', handleUnauthorized);
+
+        return () => {
+            window.removeEventListener('unauthorized', handleUnauthorized);
+        };
     }, []);
 
     const login = async (email: string, password: string) => {

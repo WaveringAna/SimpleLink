@@ -30,7 +30,7 @@ then check /target/release for the binary named `SimpleGit`
 ### From Docker
 ```bash
 docker build --build-arg API_URL=http://localhost:8080 -t simplelink .
-docker run simplelink -p 8080:8080 \
+docker run -p 8080:8080 \
     -e JWT_SECRET=change-me-in-production \ 
     -e DATABASE_URL=postgres://user:password@host:port/database \ 
     simplelink

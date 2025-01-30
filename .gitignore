@@ -11,3 +11,4 @@ release.tar.gz
 admin-setup-token.txt
 package-lock.json
 bun.lock
+*.db*

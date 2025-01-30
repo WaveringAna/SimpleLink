@@ -24,7 +24,7 @@ pub async fn create_db_pool() -> Result<DatabasePool> {
     let database_url = std::env::var("DATABASE_URL").ok();
 
     match database_url {
-        Some(url) if url.starts_with("postgres://") => {
+        Some(url) if url.starts_with("postgres://") || url.starts_with("postgresql://") => {
             info!("Using PostgreSQL database");
             let pool = PgPoolOptions::new()
                 .max_connections(5)

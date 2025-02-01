@@ -58,6 +58,12 @@ export const getAllLinks = async () => {
 	return response.data;
 };
 
+export const editLink = async (id: number, data: Partial<CreateLinkRequest>) => {
+	const response = await api.patch<Link>(`/links/${id}`, data);
+	return response.data;
+};
+
+
 export const deleteLink = async (id: number) => {
 	await api.delete(`/links/${id}`);
 };

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from '../types/api'
 import { getAllLinks, deleteLink } from '../api/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
-import { Copy, Trash2, BarChart2 } from "lucide-react"
+import { Copy, Trash2, BarChart2, Pencil } from "lucide-react"
 import {
 	Dialog,
 	DialogContent,
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog"
 
 import { StatisticsModal } from "./StatisticsModal"
+import { EditModal } from './EditModal'
 
 interface LinkListProps {
 	refresh?: number;
@@ -39,27 +40,32 @@ export function LinkList({ refresh = 0 }: LinkListProps) {
 		isOpen: false,
 		linkId: null,
 	});
+	const [editModal, setEditModal] = useState<{ isOpen: boolean; link: Link | null }>({
+		isOpen: false,
+		link: null,
+	});
 	const { toast } = useToast()
 
-	const fetchLinks = async () => {
+	const fetchLinks = useCallback(async () => {
 		try {
 			setLoading(true)
 			const data = await getAllLinks()
 			setLinks(data)
-		} catch (err) {
+		} catch (err: unknown) {
+			const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
 			toast({
 				title: "Error",
-				description: "Failed to load links",
+				description: `Failed to load links: ${errorMessage}`,
 				variant: "destructive",
 			})
 		} finally {
 			setLoading(false)
 		}
-	}
+	}, [toast, setLinks, setLoading])
 
 	useEffect(() => {
 		fetchLinks()
-	}, [refresh]) // Re-fetch when refresh counter changes
+	}, [fetchLinks, refresh]) // Re-fetch when refresh counter changes
 
 	const handleDelete = async () => {
 		if (!deleteModal.linkId) return
@@ -71,10 +77,11 @@ export function LinkList({ refresh = 0 }: LinkListProps) {
 			toast({
 				description: "Link deleted successfully",
 			})
-		} catch (err) {
+		} catch (err: unknown) {
+			const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
 			toast({
 				title: "Error",
-				description: "Failed to delete link",
+				description: `Failed to delete link: ${errorMessage}`,
 				variant: "destructive",
 			})
 		}
@@ -85,13 +92,13 @@ export function LinkList({ refresh = 0 }: LinkListProps) {
 		const baseUrl = window.location.origin
 		navigator.clipboard.writeText(`${baseUrl}/${shortCode}`)
 		toast({
-		  description: (
-			<>
-			  Link copied to clipboard
-			  <br />
-			  You can add ?source=TextHere to the end of the link to track the source of clicks
-			</>
-		  ),
+			description: (
+				<>
+					Link copied to clipboard
+					<br />
+					You can add ?source=TextHere to the end of the link to track the source of clicks
+				</>
+			),
 		})
 	}
 
@@ -127,6 +134,7 @@ export function LinkList({ refresh = 0 }: LinkListProps) {
 				</CardHeader>
 				<CardContent>
 					<div className="rounded-md border">
+
 						<Table>
 							<TableHeader>
 								<TableRow>
@@ -134,7 +142,7 @@ export function LinkList({ refresh = 0 }: LinkListProps) {
 									<TableHead className="hidden md:table-cell">Original URL</TableHead>
 									<TableHead>Clicks</TableHead>
 									<TableHead className="hidden md:table-cell">Created</TableHead>
-									<TableHead>Actions</TableHead>
+									<TableHead className="w-[1%] whitespace-nowrap pr-4">Actions</TableHead>
 								</TableRow>
 							</TableHeader>
 							<TableBody>
@@ -148,8 +156,8 @@ export function LinkList({ refresh = 0 }: LinkListProps) {
 										<TableCell className="hidden md:table-cell">
 											{new Date(link.created_at).toLocaleDateString()}
 										</TableCell>
-										<TableCell>
-											<div className="flex gap-2">
+										<TableCell className="p-2 pr-4">
+											<div className="flex items-center gap-1">
 												<Button
 													variant="ghost"
 													size="icon"
@@ -167,6 +175,15 @@ export function LinkList({ refresh = 0 }: LinkListProps) {
 												>
 													<BarChart2 className="h-4 w-4" />
 													<span className="sr-only">View statistics</span>
+												</Button>
+												<Button
+													variant="ghost"
+													size="icon"
+													className="h-8 w-8"
+													onClick={() => setEditModal({ isOpen: true, link })}
+												>
+													<Pencil className="h-4 w-4" />
+													<span className="sr-only">Edit Link</span>
 												</Button>
 												<Button
 													variant="ghost"
@@ -191,6 +208,14 @@ export function LinkList({ refresh = 0 }: LinkListProps) {
 				onClose={() => setStatsModal({ isOpen: false, linkId: null })}
 				linkId={statsModal.linkId!}
 			/>
+			{editModal.link && (
+				<EditModal
+					isOpen={editModal.isOpen}
+					onClose={() => setEditModal({ isOpen: false, link: null })}
+					link={editModal.link}
+					onSuccess={fetchLinks}
+				/>
+			)}
 		</>
 	)
 }

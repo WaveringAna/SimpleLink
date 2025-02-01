@@ -14,7 +14,7 @@ A very performant and light (6mb in memory) link shortener and tracker. Written 
 docker run -p 8080:8080 \
     -e JWT_SECRET=change-me-in-production \
     -v simplelink_data:/data \
-    simplelink
+    ghcr.io/waveringana/simplelink:v1.0.2
 ```
 
 Find the admin-setup-token pasted into the terminal output, or in admin-setup-token.txt in the container's root.

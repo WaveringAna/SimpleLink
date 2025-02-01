@@ -19,9 +19,7 @@ services:
       - shortener-network
 
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/waveringana/simplelink:v1.0.2
     container_name: shortener-app
     ports:
       - "8080:8080"

@@ -15,7 +15,6 @@ First configure .env.example and save it to .env
 If DATABASE_URL is set, it will connect to a Postgres DB. If blank, it will use an sqlite db in /data
 
 ```bash
-#set api-domain to where you will be deploying the link shortener, eg: link.example.com, default is localhost:8080
 git clone https://github.com/waveringana/simplelink && cd simplelink
 ./build.sh
 cargo run

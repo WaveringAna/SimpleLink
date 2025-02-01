@@ -6,6 +6,25 @@ A very performant and light (6mb in memory) link shortener and tracker. Written 
 
 ![StatsView](readme_img/statview.jpg)
 
+## How to Run
+
+### From Docker:
+
+```Bash
+docker run -p 8080:8080 \
+    -e JWT_SECRET=change-me-in-production \
+    -v simplelink_data:/data \
+    simplelink
+```
+
+Find the admin-setup-token pasted into the terminal output, or in admin-setup-token.txt in the container's root.
+
+This is needed to register with the frontend. (TODO, register admin account with ENV)
+
+### From Docker Compose:
+
+Edit the docker-compose.yml file. It comes included with a postgressql db for use
+
 ## Build
 
 ### From Source

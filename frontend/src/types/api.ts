@@ -32,6 +32,7 @@ export interface ClickStats {
 }
 
 export interface SourceStats {
+	date: string;
 	source: string;
 	count: number;
 }

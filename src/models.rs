@@ -150,6 +150,7 @@ pub struct ClickStats {
 
 #[derive(sqlx::FromRow, Serialize)]
 pub struct SourceStats {
+    pub date: String,
     pub source: String,
     pub count: i64,
 }

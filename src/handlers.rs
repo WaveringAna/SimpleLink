@@ -643,15 +643,16 @@ pub async fn get_link_sources(
             sqlx::query_as::<_, SourceStats>(
                 r#"
                 SELECT 
+                    DATE(created_at)::text as date,
                     query_source as source,
                     COUNT(*)::bigint as count
                 FROM clicks
                 WHERE link_id = $1
                     AND query_source IS NOT NULL
                     AND query_source != ''
-                GROUP BY query_source
-                ORDER BY COUNT(*) DESC
-                LIMIT 10
+                GROUP BY DATE(created_at), query_source
+                ORDER BY DATE(created_at) ASC, COUNT(*) DESC
+                LIMIT 300
                 "#,
             )
             .bind(link_id)
@@ -662,15 +663,16 @@ pub async fn get_link_sources(
             sqlx::query_as::<_, SourceStats>(
                 r#"
                 SELECT 
+                    DATE(created_at) as date,
                     query_source as source,
                     COUNT(*) as count
                 FROM clicks
                 WHERE link_id = ?
                     AND query_source IS NOT NULL
                     AND query_source != ''
-                GROUP BY query_source
-                ORDER BY COUNT(*) DESC
-                LIMIT 10
+                GROUP BY DATE(created_at), query_source
+                ORDER BY DATE(created_at) ASC, COUNT(*) DESC
+                LIMIT 300
                 "#,
             )
             .bind(link_id)

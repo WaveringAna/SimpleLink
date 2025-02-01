@@ -85,7 +85,13 @@ export function LinkList({ refresh = 0 }: LinkListProps) {
 		const baseUrl = window.location.origin
 		navigator.clipboard.writeText(`${baseUrl}/${shortCode}`)
 		toast({
-		  description: "Link copied to clipboard",
+		  description: (
+			<>
+			  Link copied to clipboard
+			  <br />
+			  You can add ?source=TextHere to the end of the link to track the source of clicks
+			</>
+		  ),
 		})
 	}
 

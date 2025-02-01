@@ -1,6 +1,6 @@
 # SimpleLink
 
-A very performant and light (6mb in memory) link shortener and tracker. Written in Rust and React and uses Postgres.
+A very performant and light (2MB in memory) link shortener and tracker. Written in Rust and React and uses Postgres.
 
 ![MainView](readme_img/mainview.jpg)
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Default values
-API_URL="http://localhost:8080"
+#API_URL="http://localhost:8080"
 RELEASE_MODE=false
 BINARY_MODE=false
 
@@ -9,10 +9,10 @@ BINARY_MODE=false
 for arg in "$@"
 do
     case $arg in
-        api-domain=*)
-        API_URL="${arg#*=}"
-        shift
-        ;;
+        #api-domain=*)
+        #API_URL="${arg#*=}"
+        #shift
+        #;;
         --release)
         RELEASE_MODE=true
         shift
@@ -24,7 +24,7 @@ do
     esac
 done
 
-echo "Building project with API_URL: $API_URL"
+#echo "Building project with API_URL: $API_URL"
 echo "Release mode: $RELEASE_MODE"
 
 # Check if cargo is installed
@@ -42,7 +42,7 @@ fi
 # Build frontend
 echo "Building frontend..."
 # Create .env file for Vite
-echo "VITE_API_URL=$API_URL" > frontend/.env
+#echo "VITE_API_URL=$API_URL" > frontend/.env
 
 # Install frontend dependencies and build
 cd frontend

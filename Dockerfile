@@ -57,7 +57,7 @@ COPY --from=backend-builder /usr/src/app/migrations /app/migrations
 # Copy static files
 COPY --from=backend-builder /usr/src/app/static /app/static
 
-# Expose the port (this is just documentation)
+# Expose the port
 EXPOSE 8080
 
 # Set default network configuration

@@ -10,7 +10,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 import { getLinkClickStats, getLinkSourceStats } from "../api/client";
 import { ClickStats, SourceStats } from "../types/api";
@@ -97,6 +97,20 @@ export function StatisticsModal({ isOpen, onClose, linkId }: StatisticsModalProp
     }
   }, [isOpen, linkId]);
 
+  const aggregatedSources = useMemo(() => {
+    const sourceMap = sourcesData.reduce<Record<string, number>>(
+      (acc, { source, count }) => ({
+        ...acc,
+        [source]: (acc[source] || 0) + count
+      }),
+      {}
+    );
+
+    return Object.entries(sourceMap)
+      .map(([source, count]) => ({ source, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [sourcesData]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl">
@@ -138,7 +152,7 @@ export function StatisticsModal({ isOpen, onClose, linkId }: StatisticsModalProp
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
-                  {sourcesData.map((source, index) => (
+                  {aggregatedSources.map((source, index) => (
                     <li
                       key={source.source}
                       className="flex items-center justify-between py-2 border-b last:border-0"
@@ -149,9 +163,7 @@ export function StatisticsModal({ isOpen, onClose, linkId }: StatisticsModalProp
                         </span>
                         {source.source}
                       </span>
-                      <span className="text-sm font-medium">
-                        {source.count} clicks
-                      </span>
+                      <span className="text-sm font-medium">{source.count} clicks</span>
                     </li>
                   ))}
                 </ul>

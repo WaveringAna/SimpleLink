@@ -34,7 +34,7 @@ then check /target/release for the binary named `SimpleGit`
 ### From Docker
 
 ```bash
-docker build --build-arg -t simplelink .
+docker build -t simplelink .
 docker run -p 8080:8080 \
     -e JWT_SECRET=change-me-in-production \
     -v simplelink_data:/data \

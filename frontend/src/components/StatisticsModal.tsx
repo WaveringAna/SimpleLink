@@ -58,7 +58,7 @@ const CustomTooltip = ({
   return null;
 };
 
-export default function StatisticsModal({ isOpen, onClose, linkId }: StatisticsModalProps) {
+export function StatisticsModal({ isOpen, onClose, linkId }: StatisticsModalProps) {
   const [clicksOverTime, setClicksOverTime] = useState<EnhancedClickStats[]>([]);
   const [sourcesData, setSourcesData] = useState<SourceStats[]>([]);
   const [loading, setLoading] = useState(true);

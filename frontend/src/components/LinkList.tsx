@@ -1,5 +1,3 @@
-import { lazy, Suspense } from 'react'
-
 import { useEffect, useState } from 'react'
 import { Link } from '../types/api'
 import { getAllLinks, deleteLink } from '../api/client'
@@ -24,7 +22,7 @@ import {
 	DialogFooter,
 } from "@/components/ui/dialog"
 
-const StatisticsModal = lazy(() => import('./StatisticsModal'))
+import { StatisticsModal } from "./StatisticsModal"
 
 interface LinkListProps {
 	refresh?: number;
@@ -87,13 +85,13 @@ export function LinkList({ refresh = 0 }: LinkListProps) {
 		const baseUrl = window.location.origin
 		navigator.clipboard.writeText(`${baseUrl}/${shortCode}`)
 		toast({
-			description: (
-				<>
-					Link copied to clipboard
-					<br />
-					You can add ?source=TextHere to the end of the link to track the source of clicks
-				</>
-			),
+		  description: (
+			<>
+			  Link copied to clipboard
+			  <br />
+			  You can add ?source=TextHere to the end of the link to track the source of clicks
+			</>
+		  ),
 		})
 	}
 
@@ -188,15 +186,11 @@ export function LinkList({ refresh = 0 }: LinkListProps) {
 					</div>
 				</CardContent>
 			</Card>
-			{statsModal.isOpen && (
-				<Suspense fallback={<div>Loading...</div>}>
-					<StatisticsModal
-						isOpen={statsModal.isOpen}
-						onClose={() => setStatsModal({ isOpen: false, linkId: null })}
-						linkId={statsModal.linkId!}
-					/>
-				</Suspense>
-			)}
+			<StatisticsModal
+				isOpen={statsModal.isOpen}
+				onClose={() => setStatsModal({ isOpen: false, linkId: null })}
+				linkId={statsModal.linkId!}
+			/>
 		</>
 	)
 }

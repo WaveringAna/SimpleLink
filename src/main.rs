@@ -5,8 +5,11 @@ use rust_embed::RustEmbed;
 use simplelink::check_and_generate_admin_token;
 use simplelink::{create_db_pool, run_migrations};
 use simplelink::{handlers, AppState};
-use tracing::info;
+use sqlx::{Postgres, Sqlite};
+use tracing::{error, info};
 
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
 #[derive(RustEmbed)]
 #[folder = "static/"]
 struct Asset;
@@ -34,6 +37,58 @@ async fn main() -> Result<()> {
     // Create database connection pool
     let pool = create_db_pool().await?;
     run_migrations(&pool).await?;
+
+    // First check if admin credentials are provided in environment variables
+    let admin_credentials = match (
+        std::env::var("SIMPLELINK_USER"),
+        std::env::var("SIMPLELINK_PASS"),
+    ) {
+        (Ok(user), Ok(pass)) => Some((user, pass)),
+        _ => None,
+    };
+
+    if let Some((email, password)) = admin_credentials {
+        // Now check for existing users
+        let user_count = match &pool {
+            DatabasePool::Postgres(pool) => {
+                let mut tx = pool.begin().await?;
+                let count =
+                    sqlx::query_as::<Postgres, (i64,)>("SELECT COUNT(*)::bigint FROM users")
+                        .fetch_one(&mut *tx)
+                        .await?
+                        .0;
+                tx.commit().await?;
+                count
+            }
+            DatabasePool::Sqlite(pool) => {
+                let mut tx = pool.begin().await?;
+                let count = sqlx::query_as::<Sqlite, (i64,)>("SELECT COUNT(*) FROM users")
+                    .fetch_one(&mut *tx)
+                    .await?
+                    .0;
+                tx.commit().await?;
+                count
+            }
+        };
+
+        if user_count == 0 {
+            info!("No users found, creating admin user: {}", email);
+            match create_admin_user(&pool, &email, &password).await {
+                Ok(_) => info!("Successfully created admin user"),
+                Err(e) => {
+                    error!("Failed to create admin user: {}", e);
+                    return Err(anyhow::anyhow!("Failed to create admin user: {}", e));
+                }
+            }
+        }
+    } else {
+        info!(
+            "No admin credentials provided in environment variables, skipping admin user creation"
+        );
+    }
+
+    // Create initial links from environment variables
+    create_initial_links(&pool).await?;
 
     let admin_token = check_and_generate_admin_token(&pool).await?;
 

@@ -457,12 +457,149 @@ pub async fn login(
     }))
 }
 
+pub async fn edit_link(
+    state: web::Data<AppState>,
+    user: AuthenticatedUser,
+    path: web::Path<i32>,
+    payload: web::Json<CreateLink>,
+) -> Result<impl Responder, AppError> {
+    let link_id: i32 = path.into_inner();
+
+    // Validate the new URL if provided
+    validate_url(&payload.url)?;
+
+    // Validate custom code if provided
+    if let Some(ref custom_code) = payload.custom_code {
+        validate_custom_code(custom_code)?;
+
+        // Check if the custom code is already taken by another link
+        let existing_link = match &state.db {
+            DatabasePool::Postgres(pool) => {
+                sqlx::query_as::<_, Link>("SELECT * FROM links WHERE short_code = $1 AND id != $2")
+                    .bind(custom_code)
+                    .bind(link_id)
+                    .fetch_optional(pool)
+                    .await?
+            }
+            DatabasePool::Sqlite(pool) => {
+                sqlx::query_as::<_, Link>("SELECT * FROM links WHERE short_code = ?1 AND id != ?2")
+                    .bind(custom_code)
+                    .bind(link_id)
+                    .fetch_optional(pool)
+                    .await?
+            }
+        };
+
+        if existing_link.is_some() {
+            return Err(AppError::InvalidInput(
+                "Custom code already taken".to_string(),
+            ));
+        }
+    }
+
+    // Update the link
+    let updated_link = match &state.db {
+        DatabasePool::Postgres(pool) => {
+            let mut tx = pool.begin().await?;
+
+            // First verify the link belongs to the user
+            let link =
+                sqlx::query_as::<_, Link>("SELECT * FROM links WHERE id = $1 AND user_id = $2")
+                    .bind(link_id)
+                    .bind(user.user_id)
+                    .fetch_optional(&mut *tx)
+                    .await?;
+
+            if link.is_none() {
+                return Err(AppError::NotFound);
+            }
+
+            // Update the link
+            let updated = sqlx::query_as::<_, Link>(
+                r#"
+                UPDATE links 
+                SET 
+                    original_url = $1,
+                    short_code = COALESCE($2, short_code)
+                WHERE id = $3 AND user_id = $4
+                RETURNING *
+                "#,
+            )
+            .bind(&payload.url)
+            .bind(&payload.custom_code)
+            .bind(link_id)
+            .bind(user.user_id)
+            .fetch_one(&mut *tx)
+            .await?;
+
+            // If source is provided, add a click record
+            if let Some(ref source) = payload.source {
+                sqlx::query("INSERT INTO clicks (link_id, source) VALUES ($1, $2)")
+                    .bind(link_id)
+                    .bind(source)
+                    .execute(&mut *tx)
+                    .await?;
+            }
+
+            tx.commit().await?;
+            updated
+        }
+        DatabasePool::Sqlite(pool) => {
+            let mut tx = pool.begin().await?;
+
+            // First verify the link belongs to the user
+            let link =
+                sqlx::query_as::<_, Link>("SELECT * FROM links WHERE id = ?1 AND user_id = ?2")
+                    .bind(link_id)
+                    .bind(user.user_id)
+                    .fetch_optional(&mut *tx)
+                    .await?;
+
+            if link.is_none() {
+                return Err(AppError::NotFound);
+            }
+
+            // Update the link
+            let updated = sqlx::query_as::<_, Link>(
+                r#"
+                UPDATE links 
+                SET 
+                    original_url = ?1,
+                    short_code = COALESCE(?2, short_code)
+                WHERE id = ?3 AND user_id = ?4
+                RETURNING *
+                "#,
+            )
+            .bind(&payload.url)
+            .bind(&payload.custom_code)
+            .bind(link_id)
+            .bind(user.user_id)
+            .fetch_one(&mut *tx)
+            .await?;
+
+            // If source is provided, add a click record
+            if let Some(ref source) = payload.source {
+                sqlx::query("INSERT INTO clicks (link_id, source) VALUES (?1, ?2)")
+                    .bind(link_id)
+                    .bind(source)
+                    .execute(&mut *tx)
+                    .await?;
+            }
+
+            tx.commit().await?;
+            updated
+        }
+    };
+
+    Ok(HttpResponse::Ok().json(updated_link))
+}
+
 pub async fn delete_link(
     state: web::Data<AppState>,
     user: AuthenticatedUser,
     path: web::Path<i32>,
 ) -> Result<impl Responder, AppError> {
-    let link_id = path.into_inner();
+    let link_id: i32 = path.into_inner();
 
     match &state.db {
         DatabasePool::Postgres(pool) => {

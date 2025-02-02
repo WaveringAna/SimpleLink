@@ -70,6 +70,7 @@ async fn main() -> Result<()> {
                         "/links/{id}/sources",
                         web::get().to(handlers::get_link_sources),
                     )
+                    .route("/links/{id}", web::patch().to(handlers::edit_link))
                     .route("/auth/register", web::post().to(handlers::register))
                     .route("/auth/login", web::post().to(handlers::login))
                     .route(

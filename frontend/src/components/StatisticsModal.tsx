@@ -31,7 +31,7 @@ const CustomTooltip = ({
   label,
 }: {
   active?: boolean;
-  payload?: any[];
+  payload?: { value: number; payload: EnhancedClickStats }[];
   label?: string;
 }) => {
   if (active && payload && payload.length > 0) {
@@ -81,12 +81,12 @@ export function StatisticsModal({ isOpen, onClose, linkId }: StatisticsModalProp
 
           setClicksOverTime(enhancedClicksData);
           setSourcesData(sourcesData);
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error("Failed to fetch statistics:", error);
           toast({
             variant: "destructive",
             title: "Error",
-            description: error.response?.data || "Failed to load statistics",
+            description: error instanceof Error ? error.message : "Failed to load statistics",
           });
         } finally {
           setLoading(false);

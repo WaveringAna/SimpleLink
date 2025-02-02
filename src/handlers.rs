@@ -131,7 +131,7 @@ fn validate_custom_code(code: &str) -> Result<(), AppError> {
     Ok(())
 }
 
-fn validate_url(url: &String) -> Result<(), AppError> {
+fn validate_url(url: &str) -> Result<(), AppError> {
     if url.is_empty() {
         return Err(AppError::InvalidInput("URL cannot be empty".to_string()));
     }

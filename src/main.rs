@@ -1,8 +1,10 @@
 use actix_cors::Cors;
 use actix_web::{web, App, HttpResponse, HttpServer};
 use anyhow::Result;
+use clap::Parser;
 use rust_embed::RustEmbed;
 use simplelink::check_and_generate_admin_token;
+use simplelink::models::DatabasePool;
 use simplelink::{create_db_pool, run_migrations};
 use simplelink::{handlers, AppState};
 use sqlx::{Postgres, Sqlite};
@@ -24,6 +26,106 @@ async fn serve_static_file(path: &str) -> HttpResponse {
         }
         None => HttpResponse::NotFound().body("404 Not Found"),
     }
+}
+
+async fn create_initial_links(pool: &DatabasePool) -> Result<()> {
+    if let Ok(links) = std::env::var("INITIAL_LINKS") {
+        for link_entry in links.split(';') {
+            let parts: Vec<&str> = link_entry.split(',').collect();
+            if parts.len() >= 2 {
+                let url = parts[0];
+                let code = parts[1];
+
+                match pool {
+                    DatabasePool::Postgres(pool) => {
+                        sqlx::query(
+                            "INSERT INTO links (original_url, short_code, user_id)  
+                             VALUES ($1, $2, $3) 
+                             ON CONFLICT (short_code) 
+                             DO UPDATE SET short_code = EXCLUDED.short_code
+                             WHERE links.original_url = EXCLUDED.original_url",
+                        )
+                        .bind(url)
+                        .bind(code)
+                        .bind(1)
+                        .execute(pool)
+                        .await?;
+                    }
+                    DatabasePool::Sqlite(pool) => {
+                        // First check if the exact combination exists
+                        let exists = sqlx::query_scalar::<_, bool>(
+                            "SELECT EXISTS(
+                                SELECT 1 FROM links 
+                                WHERE original_url = ?1 
+                                AND short_code = ?2
+                            )",
+                        )
+                        .bind(url)
+                        .bind(code)
+                        .fetch_one(pool)
+                        .await?;
+
+                        // Only insert if the exact combination doesn't exist
+                        if !exists {
+                            sqlx::query(
+                                "INSERT INTO links (original_url, short_code, user_id) 
+                                 VALUES (?1, ?2, ?3)",
+                            )
+                            .bind(url)
+                            .bind(code)
+                            .bind(1)
+                            .execute(pool)
+                            .await?;
+                            info!("Created initial link: {} -> {} for user_id: 1", code, url);
+                        } else {
+                            info!("Skipped existing link: {} -> {} for user_id: 1", code, url);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+async fn create_admin_user(pool: &DatabasePool, email: &str, password: &str) -> Result<()> {
+    use argon2::{
+        password_hash::{rand_core::OsRng, SaltString},
+        Argon2, PasswordHasher,
+    };
+
+    let salt = SaltString::generate(&mut OsRng);
+    let argon2 = Argon2::default();
+    let password_hash = argon2
+        .hash_password(password.as_bytes(), &salt)
+        .map_err(|e| anyhow::anyhow!("Password hashing error: {}", e))?
+        .to_string();
+
+    match pool {
+        DatabasePool::Postgres(pool) => {
+            sqlx::query(
+                "INSERT INTO users (email, password_hash) 
+                 VALUES ($1, $2) 
+                 ON CONFLICT (email) DO NOTHING",
+            )
+            .bind(email)
+            .bind(&password_hash)
+            .execute(pool)
+            .await?;
+        }
+        DatabasePool::Sqlite(pool) => {
+            sqlx::query(
+                "INSERT OR IGNORE INTO users (email, password_hash) 
+                 VALUES (?1, ?2)",
+            )
+            .bind(email)
+            .bind(&password_hash)
+            .execute(pool)
+            .await?;
+        }
+    }
+    info!("Created admin user: {}", email);
+    Ok(())
 }
 
 #[actix_web::main]

@@ -19,7 +19,7 @@ services:
       - shortener-network
 
   app:
-    image: ghcr.io/waveringana/simplelink:v2
+    image: ghcr.io/waveringana/simplelink:v2.1
     container_name: shortener-app
     ports:
       - "8080:8080"

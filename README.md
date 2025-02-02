@@ -16,7 +16,7 @@ docker run -p 8080:8080 \
     -e SIMPLELINK_USER=admin@example.com \
     -e SIMPLELINK_PASS=your-secure-password \
     -v simplelink_data:/data \
-    ghcr.io/waveringana/simplelink:v2
+    ghcr.io/waveringana/simplelink:v2.1
 ```
 
 ### Environment Variables

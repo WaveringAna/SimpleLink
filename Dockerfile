@@ -4,7 +4,7 @@ FROM oven/bun:latest AS frontend-builder
 WORKDIR /usr/src/frontend
 
 # Copy frontend files
-COPY frontend/package*.json ./
+COPY frontend/package.json ./
 RUN bun install
 
 COPY frontend/ ./

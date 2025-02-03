@@ -87,7 +87,7 @@ impl Claims {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs() as usize
-            + 24 * 60 * 60; // 24 hours from now
+            + 14 * 24 * 60 * 60; // 2 weeks from now
 
         Self { sub: user_id, exp }
     }

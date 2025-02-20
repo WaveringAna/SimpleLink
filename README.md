@@ -8,7 +8,7 @@ A very performant and light (2MB in memory) link shortener and tracker. Written 
 
 ## How to Run
 
-### From Docker:
+### From Docker
 
 ```bash
 docker run -p 8080:8080 \
@@ -16,7 +16,7 @@ docker run -p 8080:8080 \
     -e SIMPLELINK_USER=admin@example.com \
     -e SIMPLELINK_PASS=your-secure-password \
     -v simplelink_data:/data \
-    ghcr.io/waveringana/simplelink:v2.1
+    ghcr.io/waveringana/simplelink:v2.2
 ```
 
 ### Environment Variables
@@ -31,7 +31,7 @@ docker run -p 8080:8080 \
 
 If `SIMPLELINK_USER` and `SIMPLELINK_PASS` are not passed, an admin-setup-token is pasted to the console and as a text file in the project root.
 
-### From Docker Compose:
+### From Docker Compose
 
 Edit the docker-compose.yml file. It comes included with a PostgreSQL db configuration.
 

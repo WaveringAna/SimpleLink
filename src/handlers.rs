@@ -707,7 +707,6 @@ pub async fn get_link_clicks(
                 WHERE link_id = $1
                 GROUP BY DATE(created_at)
                 ORDER BY DATE(created_at) ASC
-                LIMIT 30
                 "#,
             )
             .bind(link_id)
@@ -724,7 +723,6 @@ pub async fn get_link_clicks(
                 WHERE link_id = ?
                 GROUP BY DATE(created_at)
                 ORDER BY DATE(created_at) ASC
-                LIMIT 30
                 "#,
             )
             .bind(link_id)
@@ -789,7 +787,6 @@ pub async fn get_link_sources(
                     AND query_source != ''
                 GROUP BY DATE(created_at), query_source
                 ORDER BY DATE(created_at) ASC, COUNT(*) DESC
-                LIMIT 300
                 "#,
             )
             .bind(link_id)
@@ -809,7 +806,6 @@ pub async fn get_link_sources(
                     AND query_source != ''
                 GROUP BY DATE(created_at), query_source
                 ORDER BY DATE(created_at) ASC, COUNT(*) DESC
-                LIMIT 300
                 "#,
             )
             .bind(link_id)
